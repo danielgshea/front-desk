@@ -1,0 +1,8 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "admin_agent": "./admin_agent/agent.py:get_agent"
+  },
+  "env": ".env",
+  "python_version": "3.13"
+}
