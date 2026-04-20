@@ -77,7 +77,24 @@ The agent uses Google Calendar and Gmail APIs via the common_tools repository.
 3. Choose **Desktop app** as the application type
 4. Download the credentials file
 5. **Rename it to `credentials.json`**
-6. Place it in the project root:
+6. **Store it in a secure location outside your project directory** (recommended)
+
+**Recommended: Use Environment Variable**
+
+Store your credentials outside the project and reference them via environment variable:
+
+```bash
+# Store credentials in a secure location
+mkdir -p ~/.config/google
+mv ~/Downloads/credentials.json ~/.config/google/credentials.json
+
+# Add to your .env file
+echo "GOOGLE_CREDENTIALS_PATH=$HOME/.config/google/credentials.json" >> .env
+```
+
+**Alternative: Project Directory**
+
+If you prefer to keep credentials in the project (they're excluded by `.gitignore`):
 
 ```
 front-desk/
@@ -87,7 +104,10 @@ front-desk/
 └── ...
 ```
 
-**Note**: The same `credentials.json` works for both Gmail and Calendar APIs.
+**Note**: The same `credentials.json` works for both Gmail and Calendar APIs. The common_tools library will automatically search for credentials in this order:
+1. Path specified in `GOOGLE_CREDENTIALS_PATH` environment variable (**recommended**)
+2. Current project directory
+3. Parent directories (up to 5 levels)
 
 #### Verify Credentials
 
@@ -103,6 +123,9 @@ python -m utils.verify_credentials
 Create a `.env` file in the project root (use `.env.example` as a template):
 
 ```bash
+# Google API Credentials (Recommended: use environment variable)
+GOOGLE_CREDENTIALS_PATH=/path/to/your/credentials.json
+
 # LangSmith Tracing (optional but recommended)
 LANGSMITH_API_KEY=your_langsmith_api_key
 LANGSMITH_TRACING=true
@@ -357,10 +380,32 @@ All agent interactions are automatically traced in LangSmith when configured:
 ⚠️ **Never commit sensitive files to version control!**
 
 - `credentials.json` - Google OAuth credentials
-- `token.json` - Google authentication tokens
+- `token.json` - Google authentication tokens  
 - `.env` - API keys and configuration
 
 These files are excluded via `.gitignore`, but always double-check before pushing.
+
+### Best Practices for Credentials
+
+**Recommended Approach:**
+1. **Store credentials outside your project directory** using `GOOGLE_CREDENTIALS_PATH` environment variable
+2. Set restrictive file permissions: `chmod 600 ~/.config/google/credentials.json`
+3. Never commit `.env` files containing paths or keys
+4. Use different credentials for development vs production
+
+**Example secure setup:**
+```bash
+# Store credentials securely
+mkdir -p ~/.config/google
+chmod 700 ~/.config/google
+mv credentials.json ~/.config/google/
+chmod 600 ~/.config/google/credentials.json
+
+# Add to .env
+echo "GOOGLE_CREDENTIALS_PATH=$HOME/.config/google/credentials.json" >> .env
+```
+
+This keeps sensitive credentials out of your project directory entirely, reducing the risk of accidental commits or exposure.
 
 ### File Safety
 
@@ -398,7 +443,12 @@ Managed via `pyproject.toml`:
 
 ### "Permission denied" or "Credentials not found"
 
-Make sure `credentials.json` is in the project root and you've completed the OAuth flow.
+Ensure your `GOOGLE_CREDENTIALS_PATH` environment variable is set correctly, or that `credentials.json` is in the project root. Verify you've completed the OAuth flow. Run the credential verification tool:
+
+```bash
+cd common_tools
+python -m utils.verify_credentials
+```
 
 ### "Token expired" errors
 
